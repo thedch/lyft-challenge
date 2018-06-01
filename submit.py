@@ -2,28 +2,20 @@ import sys, skvideo.io, json, base64
 import numpy as np
 from PIL import Image
 from io import BytesIO, StringIO
-
-file = sys.argv[-1]
-
-if file == 'demo.py':
-  print ("Error loading video")
-  quit
-
-# Define encoder function
-def encode(array):
-    pil_img = Image.fromarray(array)
-    buff = BytesIO()
-    pil_img.save(buff, format="PNG")
-    return base64.b64encode(buff.getvalue()).decode("utf-8")
-
-video = skvideo.io.vread(file)
-
-answer_key = {}
-
 from fastai.conv_learner import *
 from fastai.transforms import *
 import torch
 import cv2
+import pdb
+
+file = sys.argv[-1]
+
+# Thanks to jaycode and phmagic!
+def encode(array):
+    retval, buffer = cv2.imencode('.png', array)
+    return base64.b64encode(buffer).decode("utf-8")
+
+answer_key = {}
 
 class StdUpsample(nn.Module):
     def __init__(self, nin, nout):
@@ -61,8 +53,9 @@ road_learn = torch.load('road-fullmodel.pt')
 car_learn = torch.load('car-fullmodel-3.pt')
 
 # Frame numbering starts at 1
-frame = 1
-
+frame_num = 1
+    
+video = skvideo.io.vread(file)        
 for im in video:
     im = im.astype(np.float32)/255
     
@@ -83,8 +76,8 @@ for im in video:
     binary_car_result = np.where(pred_big>-2,1,0).astype('uint8')
 
     # Save answers
-    answer_key[frame] = [encode(binary_car_result), encode(binary_road_result)]        
-    frame += 1
+    answer_key[frame_num] = [encode(binary_car_result), encode(binary_road_result)]        
+    frame_num += 1
 
 # Print output in proper json format
 print (json.dumps(answer_key))
