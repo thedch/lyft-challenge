@@ -7,6 +7,7 @@ from fastai.transforms import *
 import torch
 import cv2
 import pdb
+from lyft_helpers import *
 
 file = sys.argv[-1]
 
@@ -16,29 +17,6 @@ def encode(array):
     return base64.b64encode(buffer).decode("utf-8")
 
 answer_key = {}
-
-class StdUpsample(nn.Module):
-    def __init__(self, nin, nout):
-        super().__init__()
-        self.conv = nn.ConvTranspose2d(nin, nout, 2, stride=2)
-        self.bn = nn.BatchNorm2d(nout)
-        
-    def forward(self, x): return self.bn(F.relu(self.conv(x)))
-
-def grab_last_channel(x): return x[:,0]
-def not_lambda(x): return x[:,0] # TODO: Rename this please
-
-flatten_channel = Lambda(grab_last_channel)
-
-simple_up = nn.Sequential(
-    nn.ReLU(),
-    StdUpsample(512,256),
-    StdUpsample(256,256),
-    StdUpsample(256,256),
-    StdUpsample(256,256),
-    nn.ConvTranspose2d(256, 1, 2, stride=2),
-    flatten_channel
-)
 
 aug_tfms = [RandomRotate(4, tfm_y=TfmType.CLASS),
             RandomFlip(tfm_y=TfmType.CLASS),
