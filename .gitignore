@@ -1,3 +1,4 @@
 train
 data
 fastai
+*.pt
