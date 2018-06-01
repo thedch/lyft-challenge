@@ -25,13 +25,24 @@ aug_tfms = [RandomRotate(4, tfm_y=TfmType.CLASS),
 sz = 512
 transforms = tfms_from_model(resnet34, sz, crop_type=CropType.NO, tfm_y=TfmType.CLASS, aug_tfms=aug_tfms)
 
-road_learn = torch.load('road-fullmodel.pt')
+road_learn = torch.load('road-fullmodel-2.pt')
 car_learn = torch.load('car-fullmodel-3.pt')
 
+ROAD_THRESH = 3
+CAR_THRESH = -2
+
 frame_num = 1 # Frame numbering starts at 1
-    
-video = skvideo.io.vread(file)        
-for im in video:
+
+# video = skvideo.io.vread(file)        
+# for im in video:
+
+video = cv2.VideoCapture(file)
+while video.isOpened():    
+    ret, frame = video.read()
+    if frame == None:
+        break # end of video
+        
+    im = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)      
     im = im.astype(np.float32)/255
     
     aug_t, aug_v = transforms[1](im, im)
@@ -41,13 +52,13 @@ for im in video:
     pred = road_learn(im_with_batch)
     pred_np = to_np(pred)
     pred_big = cv2.resize(pred_np[0], (800, 600)) 
-    binary_road_result = np.where(pred_big>3,1,0).astype('uint8')
+    binary_road_result = np.where(pred_big>ROAD_THRESH,1,0).astype('uint8')
     
     # Car section        
     pred = car_learn(im_with_batch)
     pred_np = to_np(pred)
     pred_big = cv2.resize(pred_np[0], (800, 600)) 
-    binary_car_result = np.where(pred_big>-2,1,0).astype('uint8')
+    binary_car_result = np.where(pred_big>CAR_THRESH,1,0).astype('uint8')
 
     # Save answers
     answer_key[frame_num] = [encode(binary_car_result), encode(binary_road_result)]        
