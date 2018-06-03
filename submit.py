@@ -22,19 +22,16 @@ aug_tfms = [RandomRotate(4, tfm_y=TfmType.CLASS),
             RandomFlip(tfm_y=TfmType.CLASS),
             RandomLighting(0.05, 0.05)]
 
-sz = 512
+sz = 448
 transforms = tfms_from_model(resnet34, sz, crop_type=CropType.NO, tfm_y=TfmType.CLASS, aug_tfms=aug_tfms)
 
 road_learn = torch.load('road-fullmodel-2.pt')
-car_learn = torch.load('car-fullmodel-3.pt')
+car_learn = torch.load('car-fullmodel-2kds-2.pt')
 
 ROAD_THRESH = 3
 CAR_THRESH = -2
 
 frame_num = 1 # Frame numbering starts at 1
-
-# video = skvideo.io.vread(file)        
-# for im in video:
 
 video = cv2.VideoCapture(file)
 while video.isOpened():    
